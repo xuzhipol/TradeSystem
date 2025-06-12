@@ -2,6 +2,25 @@
 #include "ThostFtdcUserApiDataType.h"
 #include "ThostFtdcUserApiStruct.h"
 #include "ThostFtdcTraderApi.h"
+#include<iostream>
+#include<Database.h>
+#include <cstring> 
+#include <string>   
+#include <conio.h>
+#include <windows.h>
+
+extern int nRequestID;  //全局变量，记录请求ID
+extern const char* g_chFrontaddr;
+extern TThostFtdcBrokerIDType g_chBrokerID;
+extern TThostFtdcUserIDType g_chUserID;
+extern TThostFtdcPasswordType g_chPassword;
+extern TThostFtdcLoginRemarkType	LoginRemark;
+extern TThostFtdcAuthCodeType	g_chAuthCode;
+extern TThostFtdcAppIDType	g_chAppID;
+extern TThostFtdcInstrumentIDType	g_chInstrumentID;
+extern TThostFtdcInvestorIDType g_chInvestorID;
+extern HANDLE g_hEvent; // 全局变量，事件句柄，用于等待异步操作完成
+
 
 //  回调类，继承服务提供接口，重写了其中的部分回调函数
 class SpiClass : public CThostFtdcTraderSpi
@@ -13,6 +32,9 @@ public:
     SpiClass() {};  //构造函数
     SpiClass(CThostFtdcTraderApi* api) :pApi(api) {};
     virtual ~SpiClass() {};
+
+    // 查询持仓
+    void ReqQryInvestorPositionDetail();
 
     ///当客户端与交易后台建立起通信连接时（还未登录前），该方法被调用。
     virtual void OnFrontConnected();
@@ -42,8 +64,8 @@ public:
     virtual void OnRspSubMarketData(CThostFtdcSpecificInstrumentField *pSpecificInstrument, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast);
 
     ///请求查询投资者持仓响应
-    virtual void OnRspQryInvestorPosition(CThostFtdcInvestorPositionField* pInvestorPosition, CThostFtdcRspInfoField* pRspInfo, int nRequestID, bool bIsLast);
-
+    void OnRspQryInvestorPositionDetail(CThostFtdcInvestorPositionDetailField* pInvestorPositionDetail, CThostFtdcRspInfoField* pRspInfo, int nRequestID, bool bIsLast);
+   
     ///请求查询资金账户响应
     virtual void OnRspQryTradingAccount(CThostFtdcTradingAccountField* pTradingAccount, CThostFtdcRspInfoField* pRspInfo, int nRequestID, bool bIsLast);
 };
