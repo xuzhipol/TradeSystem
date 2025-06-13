@@ -14,6 +14,11 @@ TThostFtdcAuthCodeType	g_chAuthCode = "0000000000000000";
 TThostFtdcAppIDType	g_chAppID = "test";
 TThostFtdcInstrumentIDType	g_chInstrumentID = "ss2508";
 TThostFtdcInvestorIDType g_chInvestorID = "242498";
+TThostFtdcExchangeIDType g_chExchangeID="SHFE";
+int OrderRef_num = 0;//存储订单编号
+int num = 0;//记录查询结果-持仓数量
+char direction = '0';//记录持仓方向
+int Flag;//标志位，0表示报单完成，1表示报单只完成了平仓部分，还需要开仓
 HANDLE g_hEvent = CreateEvent(NULL, false, false, NULL);
 
 int main()
@@ -21,7 +26,7 @@ int main()
     system("COLOR 0a");
     CThostFtdcTraderApi* pApi = CThostFtdcTraderApi::CreateFtdcTraderApi();
     SpiClass spi(pApi);
-    printf("\napi版本: \n%s", pApi->GetApiVersion());
+    //printf("\napi版本: \n%s", pApi->GetApiVersion());
     pApi->RegisterSpi(&spi);
     pApi->SubscribePrivateTopic(THOST_TERT_QUICK);
     pApi->SubscribePublicTopic(THOST_TERT_QUICK);
@@ -38,28 +43,34 @@ int main()
     strcpy_s(a.AppID, g_chAppID);
     strcpy_s(a.UserProductInfo, g_chAppID);
     int b = pApi->ReqAuthenticate(&a, nRequestID++);
-    printf("\t客户端认证 = [%d]\n", b);
+    //printf("\t客户端认证 = [%d]\n", b);
     WaitForSingleObject(g_hEvent, INFINITE);
 
     CThostFtdcReqUserLoginField reqUserLogin = { 0 };
     strcpy_s(reqUserLogin.BrokerID, g_chBrokerID);
     strcpy_s(reqUserLogin.UserID, g_chUserID);
     strcpy_s(reqUserLogin.Password, g_chPassword);
-    //strcpy_s(reqUserLogin.ClientIPAddress, "::c0a8:0101");
     strcpy_s(reqUserLogin.LoginRemark, "test");
-    // 发出登陆请求
     pApi->ReqUserLogin(&reqUserLogin, nRequestID++);
     WaitForSingleObject(g_hEvent, INFINITE);
-
-    _getch();
-
-    printf("日期:");
-    printf(pApi->GetTradingDay());
-    cout << endl;
 
     spi.ReqQryInvestorPositionDetail();
     WaitForSingleObject(g_hEvent, INFINITE);
 
+    //根据目标仓位和现有仓位报单
+    spi.ReqOrderInsert_Ordinary(num,direction);
+    _getch();
+
+    if (Flag == 1) {
+        while (Flag == 1)//只要平仓操作没有完成，就循环查询
+        {
+            spi.ReqQryInvestorPositionDetail();
+            WaitForSingleObject(g_hEvent, INFINITE);
+        }
+        printf("平仓完成,请报单开仓：\n");
+        spi.ReqOrderInsert_Ordinary(num, direction);
+        _getch();
+    }
     system("pause");
     return 1;
 }

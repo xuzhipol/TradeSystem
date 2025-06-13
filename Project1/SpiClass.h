@@ -19,6 +19,11 @@ extern TThostFtdcAuthCodeType	g_chAuthCode;
 extern TThostFtdcAppIDType	g_chAppID;
 extern TThostFtdcInstrumentIDType	g_chInstrumentID;
 extern TThostFtdcInvestorIDType g_chInvestorID;
+extern TThostFtdcExchangeIDType g_chExchangeID;
+extern int OrderRef_num;
+extern int num;//记录查询结果-持仓数量
+extern char direction;//记录持仓方向
+extern int Flag;
 extern HANDLE g_hEvent; // 全局变量，事件句柄，用于等待异步操作完成
 
 
@@ -35,6 +40,9 @@ public:
 
     // 查询持仓
     void ReqQryInvestorPositionDetail();
+
+    // 报入一笔普通立即单
+    void ReqOrderInsert_Ordinary(int,char);
 
     ///当客户端与交易后台建立起通信连接时（还未登录前），该方法被调用。
     virtual void OnFrontConnected();
@@ -60,13 +68,16 @@ public:
 	///错误应答
     virtual void OnRspError(CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast);    
 
-    ///订阅行情应答
-    virtual void OnRspSubMarketData(CThostFtdcSpecificInstrumentField *pSpecificInstrument, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast);
-
     ///请求查询投资者持仓响应
     void OnRspQryInvestorPositionDetail(CThostFtdcInvestorPositionDetailField* pInvestorPositionDetail, CThostFtdcRspInfoField* pRspInfo, int nRequestID, bool bIsLast);
    
-    ///请求查询资金账户响应
-    virtual void OnRspQryTradingAccount(CThostFtdcTradingAccountField* pTradingAccount, CThostFtdcRspInfoField* pRspInfo, int nRequestID, bool bIsLast);
+    ///报单录入应答
+    virtual void OnRspOrderInsert(CThostFtdcInputOrderField* pInputOrder, CThostFtdcRspInfoField* pRspInfo, int nRequestID, bool bIsLast);
+
+    ///报单回报
+    void OnRtnOrder(CThostFtdcOrderField* pOrder);
+
+    ///成交回报
+    void OnRtnTrade(CThostFtdcTradeField* pTrade);
 };
 
